@@ -137,9 +137,20 @@ public abstract class NetatmoDeviceHandler<DEVICE> extends AbstractNetatmoThingH
                         refreshStrategy.setDataTimeStamp(dataTimeStamp);
                     }
                     radioHelper.ifPresent(helper -> helper.setModule(device));
+                    NetatmoBridgeHandler handler = getBridgeHandler();
+                    if (handler != null) {
+                        handler.checkForNewThings(newDeviceReading);
+                    }
                 } else {
                     logger.debug("Failed to update device {} readings! Skip updating channels", getId());
                 }
+                // Be sure that all channels for the modules will be updated with refreshed data
+                childs.forEach((childId, moduleData) -> {
+                    Optional<AbstractNetatmoThingHandler> childHandler = getBridgeHandler().findNAThing(childId);
+                    childHandler.map(NetatmoModuleHandler.class::cast).ifPresent(naChildModule -> {
+                        naChildModule.setRefreshRequired(true);
+                    });
+                });
             } else {
                 logger.debug("Data still valid for device {}", getId());
             }
@@ -201,7 +212,11 @@ public abstract class NetatmoDeviceHandler<DEVICE> extends AbstractNetatmoThingH
         BigDecimal dataValidityPeriod;
         if (thing.getProperties().containsKey(PROPERTY_REFRESH_PERIOD)) {
             String refreshPeriodProperty = thing.getProperties().get(PROPERTY_REFRESH_PERIOD);
-            dataValidityPeriod = new BigDecimal(refreshPeriodProperty);
+            if ("auto".equalsIgnoreCase(refreshPeriodProperty)) {
+                dataValidityPeriod = new BigDecimal(-1);
+            } else {
+                dataValidityPeriod = new BigDecimal(refreshPeriodProperty);
+            }
         } else {
             Object interval = config.get(REFRESH_INTERVAL);
             dataValidityPeriod = (BigDecimal) interval;
@@ -210,5 +225,9 @@ public abstract class NetatmoDeviceHandler<DEVICE> extends AbstractNetatmoThingH
     }
 
     protected abstract @Nullable Integer getDataTimestamp();
+
+    public void expireData() {
+        refreshStrategy.expireData();
+    }
 
 }

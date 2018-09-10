@@ -32,12 +32,12 @@ import org.slf4j.LoggerFactory;
  * {@link NikoHomeControlBridgeDiscoveryService} is used to discover a Niko Home Control IP-interface in the local
  * network.
  *
- * @author Mark Herwege
+ * @author Mark Herwege - Initial Contribution
  */
 @Component(service = DiscoveryService.class, immediate = true, configurationPid = "discovery.nikohomecontrol")
 public class NikoHomeControlBridgeDiscoveryService extends AbstractDiscoveryService {
 
-    private Logger logger = LoggerFactory.getLogger(NikoHomeControlBridgeDiscoveryService.class);
+    private final Logger logger = LoggerFactory.getLogger(NikoHomeControlBridgeDiscoveryService.class);
 
     private ScheduledFuture<?> nhcDiscoveryJob;
 

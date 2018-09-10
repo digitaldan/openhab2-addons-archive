@@ -34,11 +34,11 @@ import org.slf4j.LoggerFactory;
  * {@link NikoHomeControlBridgeHandler} is the handler for a Niko Home Control IP-interface and connects it to
  * the framework.
  *
- * @author Mark Herwege
+ * @author Mark Herwege - Initial Contribution
  */
 public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
 
-    private Logger logger = LoggerFactory.getLogger(NikoHomeControlBridgeHandler.class);
+    private final Logger logger = LoggerFactory.getLogger(NikoHomeControlBridgeHandler.class);
 
     private NikoHomeControlCommunication nhcComm;
 
@@ -71,7 +71,6 @@ public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.OFFLINE.COMMUNICATION_ERROR,
                     "Niko Home Control: cannot resolve bridge IP with hostname " + config.get(CONFIG_HOST_NAME));
         }
-
     }
 
     /**
@@ -108,7 +107,7 @@ public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
             if (nhcDiscovery != null) {
                 nhcDiscovery.discoverDevices();
             } else {
-                logger.debug("Niko Home Control: cannot discover actions, discovery service not started");
+                logger.debug("Niko Home Control: cannot discover devices, discovery service not started");
             }
         });
     }
@@ -148,7 +147,6 @@ public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
 
             updateStatus(ThingStatus.ONLINE);
         }, refreshInterval, refreshInterval, TimeUnit.MINUTES);
-
     }
 
     /**
@@ -166,7 +164,6 @@ public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
     public void bridgeOnline() {
         updateProperties();
         updateStatus(ThingStatus.ONLINE);
-
     }
 
     /**
@@ -188,7 +185,6 @@ public class NikoHomeControlBridgeHandler extends BaseBridgeHandler {
         properties.put("connectionStartDate", this.nhcComm.getSystemInfo().getTime());
 
         thing.setProperties(properties);
-
     }
 
     @Override

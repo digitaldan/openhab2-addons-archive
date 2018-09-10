@@ -37,7 +37,7 @@ import com.google.common.collect.Sets;
  *
  * @author Oliver Kuhl - Initial contribution
  */
-@Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.innogysmarthome")
+@Component(service = ThingHandlerFactory.class, configurationPid = "binding.innogysmarthome")
 public class InnogyHandlerFactory extends BaseThingHandlerFactory implements ThingHandlerFactory {
 
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES = Sets.union(InnogyBridgeHandler.SUPPORTED_THING_TYPES,
@@ -80,14 +80,15 @@ public class InnogyHandlerFactory extends BaseThingHandlerFactory implements Thi
     @Override
     protected synchronized void removeHandler(ThingHandler thingHandler) {
         if (thingHandler instanceof InnogyBridgeHandler) {
-            ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.get(thingHandler.getThing().getUID());
+            ServiceRegistration<?> serviceReg = this.discoveryServiceRegs.remove(thingHandler.getThing().getUID());
             if (serviceReg != null) {
                 // remove discovery service, if bridge handler is removed
                 InnogyDeviceDiscoveryService service = (InnogyDeviceDiscoveryService) bundleContext
                         .getService(serviceReg.getReference());
-                service.deactivate();
                 serviceReg.unregister();
-                discoveryServiceRegs.remove(thingHandler.getThing().getUID());
+                if (service != null) {
+                    service.deactivate();
+                }
             }
         }
     }

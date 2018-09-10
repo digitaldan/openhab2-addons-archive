@@ -44,7 +44,7 @@ import com.google.common.collect.Sets;
  *
  * @author Gregory Moyer - Initial contribution
  */
-@Component(service = ThingHandlerFactory.class, immediate = true, configurationPid = "binding.lametrictime")
+@Component(service = ThingHandlerFactory.class, configurationPid = "binding.lametrictime")
 public class LaMetricTimeHandlerFactory extends BaseThingHandlerFactory {
 
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPE_UIDS = Sets.newHashSet(THING_TYPE_DEVICE,
@@ -121,14 +121,11 @@ public class LaMetricTimeHandlerFactory extends BaseThingHandlerFactory {
      */
     private synchronized void unregisterAppDiscoveryService(final LaMetricTimeHandler deviceHandler) {
         ThingUID thingUID = deviceHandler.getThing().getUID();
-        ServiceRegistration<?> serviceReg = discoveryServiceReg.get(thingUID);
-        if (serviceReg == null) {
-            return;
+        ServiceRegistration<?> serviceReg = discoveryServiceReg.remove(thingUID);
+        if (serviceReg != null) {
+            logger.debug("Unregistering app discovery service");
+            serviceReg.unregister();
         }
-
-        logger.debug("Unregistering app discovery service");
-        serviceReg.unregister();
-        discoveryServiceReg.remove(thingUID);
     }
 
     @Reference
