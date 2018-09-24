@@ -88,22 +88,22 @@ public class AutelisHandler extends BaseThingHandler {
     /**
      * Clear our state every hour
      */
-    private static int NORMAL_CLEARTIME = 60 * 60; // one hour
+    private static int NORMAL_CLEARTIME_SECONDS = 60 * 60;
 
     /**
      * Default poll rate rate, this is derived from the Autelis web UI
      */
-    static final int DEFAULT_REFRSH = 3; // 3 seconds
+    static final int DEFAULT_REFRESH_SECONDS = 3;
 
     /**
      * How long should we wait to poll after we send an update, derived from trial and error
      */
-    static final int COMMAND_UPDATE_TIME = 6; // 6 seconds
+    static final int COMMAND_UPDATE_TIME_SECONDS = 6;
 
     /**
      * The autelis unit will 'loose' commands if sent to fast
      */
-    static final int THROTTLE_TIME = 500; // milliseconds
+    static final int THROTTLE_TIME_MILLISECONDS = 500;
 
     /**
      * Autelis web port
@@ -118,7 +118,7 @@ public class AutelisHandler extends BaseThingHandler {
     /**
      * Matcher for pump channel names for Pentair
      */
-    static final Pattern pumpsPattern = Pattern.compile("(pumps/pump\\d?)-(watts|rpm|gpm|filter|error)");
+    static final Pattern PUMPS_PATTERN = Pattern.compile("(pumps/pump\\d?)-(watts|rpm|gpm|filter|error)");
 
     /**
      * Holds the next clear time in millis
@@ -148,7 +148,7 @@ public class AutelisHandler extends BaseThingHandler {
     /**
      * Authentication for login
      */
-    String basicAuthentication;
+    private String basicAuthentication;
 
     /**
      * Regex expression to match XML responses from the Autelis, this is used to
@@ -207,7 +207,7 @@ public class AutelisHandler extends BaseThingHandler {
             String type = args[0];
             String name = args[1];
 
-            if (type.equals("equipment")) {
+            if ("equipment".equals(type)) {
                 String cmd = "value";
                 int value;
                 if (command == OnOffType.OFF) {
@@ -226,7 +226,7 @@ public class AutelisHandler extends BaseThingHandler {
                 }
                 String response = getUrl(baseURL + "/set.cgi?name=" + name + "&" + cmd + "=" + value, TIMEOUT);
                 logger.debug("equipment set {} {} {} : result {}", name, cmd, value, response);
-            } else if (type.equals("temp")) {
+            } else if ("temp".equals(type)) {
                 String value;
                 if (command == IncreaseDecreaseType.INCREASE) {
                     value = "up";
@@ -252,10 +252,10 @@ public class AutelisHandler extends BaseThingHandler {
                 }
                 String response = getUrl(baseURL + "/set.cgi?wait=1&name=" + name + "&" + cmd + "=" + value, TIMEOUT);
                 logger.debug("temp set name:{} cmd:{} value:{} : result {}", name, cmd, value, response);
-            } else if (type.equals("chem")) {
+            } else if ("chem".equals(type)) {
                 String response = getUrl(baseURL + "/set.cgi?name=" + name + "&chem=" + command.toString(), TIMEOUT);
                 logger.debug("chlrp {} {}: result {}", name, command, response);
-            } else if (type.equals("pumps")) {
+            } else if ("pumps".equals(type)) {
                 String response = getUrl(baseURL + "/set.cgi?name=" + name + "&speed=" + command.toString(), TIMEOUT);
                 logger.debug("pumps {} {}: result {}", name, command, response);
             } else {
@@ -264,7 +264,7 @@ public class AutelisHandler extends BaseThingHandler {
         }
         clearState(true);
         // reset the schedule for our next poll which at that time will reflect if our command was successful or not.
-        initPolling(COMMAND_UPDATE_TIME);
+        initPolling(COMMAND_UPDATE_TIME_SECONDS);
     }
 
     /**
@@ -272,8 +272,8 @@ public class AutelisHandler extends BaseThingHandler {
      */
     private void configure() {
         AutelisConfiguration configuration = getConfig().as(AutelisConfiguration.class);
-        Integer _refresh = configuration.refresh;
-        Integer _port = configuration.port;
+        Integer refreshRate = configuration.refresh;
+        Integer inetPort = configuration.port;
         String host = configuration.host;
         String username = configuration.user;
         String password = configuration.password;
@@ -293,14 +293,14 @@ public class AutelisHandler extends BaseThingHandler {
             return;
         }
 
-        refresh = DEFAULT_REFRSH;
-        if (_refresh != null) {
-            refresh = _refresh.intValue();
+        refresh = DEFAULT_REFRESH_SECONDS;
+        if (refreshRate != null) {
+            refresh = refreshRate.intValue();
         }
 
         int port = WEB_PORT;
-        if (_port != null) {
-            port = _port.intValue();
+        if (inetPort != null) {
+            port = inetPort.intValue();
         }
 
         baseURL = "http://" + host + ":" + port;
@@ -326,7 +326,7 @@ public class AutelisHandler extends BaseThingHandler {
                     logger.debug("Exception during poll : {}", e);
                 }
             }
-        }, initalDelay, DEFAULT_REFRSH, TimeUnit.SECONDS);
+        }, initalDelay, DEFAULT_REFRESH_SECONDS, TimeUnit.SECONDS);
     }
 
     /**
@@ -405,7 +405,7 @@ public class AutelisHandler extends BaseThingHandler {
                  * Also, some pools will only report the first 3 out of the 5 values.
                  */
 
-                Matcher matcher = pumpsPattern.matcher(key);
+                Matcher matcher = PUMPS_PATTERN.matcher(key);
                 if (matcher.matches()) {
                     if (!pumps.containsKey(key)) {
                         String pumpValue = xpath.evaluate("response/" + matcher.group(1), is);
@@ -464,7 +464,7 @@ public class AutelisHandler extends BaseThingHandler {
     private synchronized String getUrl(String url, int timeout) {
         // throttle commands for a very short time to avoid 'loosing' them
         long now = System.currentTimeMillis();
-        long nextReq = lastRequestTime + THROTTLE_TIME;
+        long nextReq = lastRequestTime + THROTTLE_TIME_MILLISECONDS;
         if (nextReq > now) {
             try {
                 logger.trace("Throttling request for {} mills", nextReq - now);
@@ -516,7 +516,7 @@ public class AutelisHandler extends BaseThingHandler {
     private void clearState(boolean force) {
         if (force || System.currentTimeMillis() >= clearTime) {
             stateMap.clear();
-            clearTime = System.currentTimeMillis() + (NORMAL_CLEARTIME * 1000);
+            clearTime = System.currentTimeMillis() + (NORMAL_CLEARTIME_SECONDS * 1000);
         }
     }
 
