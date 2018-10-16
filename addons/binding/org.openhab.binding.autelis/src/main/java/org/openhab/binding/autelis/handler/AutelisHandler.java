@@ -279,7 +279,7 @@ public class AutelisHandler extends BaseThingHandler {
 
         AutelisConfiguration configuration = getConfig().as(AutelisConfiguration.class);
         Integer refreshOrNull = configuration.refresh;
-        Integer portOrNUll = configuration.port;
+        Integer portOrNull = configuration.port;
         String host = configuration.host;
         String username = configuration.user;
         String password = configuration.password;
@@ -305,8 +305,8 @@ public class AutelisHandler extends BaseThingHandler {
         }
 
         int port = WEB_PORT;
-        if (portOrNUll != null) {
-            port = portOrNUll.intValue();
+        if (portOrNull != null) {
+            port = portOrNull.intValue();
         }
 
         baseURL = "http://" + host + ":" + port;
