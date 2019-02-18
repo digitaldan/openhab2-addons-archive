@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.plugwise.internal;
 
@@ -14,6 +18,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.jdt.annotation.NonNullByDefault;
+import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.binding.plugwise.internal.protocol.field.DeviceType;
 import org.openhab.binding.plugwise.internal.protocol.field.MACAddress;
 import org.slf4j.Logger;
@@ -24,6 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Wouter Born - Initial contribution
  */
+@NonNullByDefault
 public abstract class PlugwiseDeviceTask {
 
     private final Logger logger = LoggerFactory.getLogger(PlugwiseDeviceTask.class);
@@ -32,11 +39,11 @@ public abstract class PlugwiseDeviceTask {
     private final String name;
     private final ScheduledExecutorService scheduler;
 
-    private DeviceType deviceType;
-    private Duration interval;
-    private MACAddress macAddress;
+    private @Nullable DeviceType deviceType;
+    private @Nullable Duration interval;
+    private @Nullable MACAddress macAddress;
 
-    private ScheduledFuture<?> future;
+    private @Nullable ScheduledFuture<?> future;
 
     private Runnable scheduledRunnable = new Runnable() {
         @Override
@@ -60,7 +67,7 @@ public abstract class PlugwiseDeviceTask {
 
     public abstract Duration getConfiguredInterval();
 
-    public Duration getInterval() {
+    public @Nullable Duration getInterval() {
         return interval;
     }
 
@@ -80,11 +87,12 @@ public abstract class PlugwiseDeviceTask {
         try {
             lock.lock();
             if (!isScheduled()) {
-                interval = getConfiguredInterval();
-                future = scheduler.scheduleWithFixedDelay(scheduledRunnable, 0, interval.getSeconds(),
+                Duration configuredInterval = getConfiguredInterval();
+                future = scheduler.scheduleWithFixedDelay(scheduledRunnable, 0, configuredInterval.getSeconds(),
                         TimeUnit.SECONDS);
+                interval = configuredInterval;
                 logger.debug("Scheduled '{}' Plugwise task for {} ({}) with {} seconds interval", name, deviceType,
-                        macAddress, interval.getSeconds());
+                        macAddress, configuredInterval.getSeconds());
             }
         } finally {
             lock.unlock();
@@ -95,7 +103,10 @@ public abstract class PlugwiseDeviceTask {
         try {
             lock.lock();
             if (isScheduled()) {
-                future.cancel(true);
+                ScheduledFuture<?> localFuture = future;
+                if (localFuture != null) {
+                    localFuture.cancel(true);
+                }
                 future = null;
                 logger.debug("Stopped '{}' Plugwise task for {} ({})", name, deviceType, macAddress);
             }
@@ -104,7 +115,7 @@ public abstract class PlugwiseDeviceTask {
         }
     }
 
-    public void update(DeviceType deviceType, MACAddress macAddress) {
+    public void update(DeviceType deviceType, @Nullable MACAddress macAddress) {
         this.deviceType = deviceType;
         this.macAddress = macAddress;
     }

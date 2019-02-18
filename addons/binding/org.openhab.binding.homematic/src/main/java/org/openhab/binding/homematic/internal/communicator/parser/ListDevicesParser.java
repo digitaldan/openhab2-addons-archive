@@ -1,12 +1,18 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.homematic.internal.communicator.parser;
+
+import static org.openhab.binding.homematic.internal.HomematicBindingConstants.CONFIGURATION_CHANNEL_NUMBER;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -50,8 +56,10 @@ public class ListDevicesParser extends CommonRpcParser<Object[], Collection<HmDe
                 String id = toString(data.get("ID"));
                 String firmware = toString(data.get("FIRMWARE"));
 
-                devices.put(address,
-                        new HmDevice(address, hmInterface, type, config.getGatewayInfo().getId(), id, firmware));
+                HmDevice device = new HmDevice(address, hmInterface, type, config.getGatewayInfo().getId(), id,
+                        firmware);
+                device.addChannel(new HmChannel(type, CONFIGURATION_CHANNEL_NUMBER));
+                devices.put(address, device);
             } else {
                 // channel
                 String deviceAddress = getSanitizedAddress(data.get("PARENT"));

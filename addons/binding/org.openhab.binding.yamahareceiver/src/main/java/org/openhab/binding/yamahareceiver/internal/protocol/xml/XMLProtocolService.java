@@ -1,14 +1,18 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.yamahareceiver.internal.protocol.xml;
 
-import org.openhab.binding.yamahareceiver.YamahaReceiverBindingConstants.Zone;
+import org.openhab.binding.yamahareceiver.internal.YamahaReceiverBindingConstants.Zone;
 import org.openhab.binding.yamahareceiver.internal.protocol.AbstractConnection;
 import org.openhab.binding.yamahareceiver.internal.protocol.ReceivedMessageParseException;
 import org.slf4j.Logger;
@@ -22,9 +26,12 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 
 import static java.util.stream.Collectors.joining;
+import static org.openhab.binding.yamahareceiver.internal.protocol.xml.XMLConstants.Commands.ZONE_INPUT_PATH;
+import static org.openhab.binding.yamahareceiver.internal.protocol.xml.XMLConstants.Commands.ZONE_INPUT_QUERY;
 
 /**
  * Provides services for XML protocol
@@ -34,12 +41,6 @@ import static java.util.stream.Collectors.joining;
 public class XMLProtocolService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(XMLProtocolService.class);
-
-    private final WeakReference<AbstractConnection> comReference;
-
-    public XMLProtocolService(AbstractConnection com) {
-        this.comReference = new WeakReference<>(com);
-    }
 
     /**
      * Sends a command to the specified zone.
@@ -97,16 +98,14 @@ public class XMLProtocolService {
     public static Collection<InputDto> getInputs(AbstractConnection con, Zone zone)
             throws IOException, ReceivedMessageParseException {
 
-        Node inputSelItem = getZoneResponse(con, zone, "<Input><Input_Sel_Item>GetParam</Input_Sel_Item></Input>", "Input/Input_Sel_Item");
-        NodeList items = inputSelItem.getChildNodes();
+        Node inputSelItem = getZoneResponse(con, zone, ZONE_INPUT_QUERY, ZONE_INPUT_PATH);
 
-        List<InputDto> inputs = new ArrayList<>();
-        for (int i = 0; i < items.getLength(); i++) {
-            Element item = (Element) items.item(i);
+        List<InputDto> inputs = new LinkedList<>();
+        XMLUtils.getChildElements(inputSelItem).forEach(item -> {
             String param = item.getElementsByTagName("Param").item(0).getTextContent();
             boolean writable = item.getElementsByTagName("RW").item(0).getTextContent().contains("W");
             inputs.add(new InputDto(param, writable));
-        }
+        });
 
         if (LOGGER.isTraceEnabled()) {
             LOGGER.trace("Zone {} - inputs: {}", zone, inputs.stream().map(InputDto::toString).collect(joining(", ")));

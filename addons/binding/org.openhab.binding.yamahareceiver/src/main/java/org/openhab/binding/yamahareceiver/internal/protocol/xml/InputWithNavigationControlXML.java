@@ -1,21 +1,27 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.yamahareceiver.internal.protocol.xml;
 
 import java.io.IOException;
 
-import org.openhab.binding.yamahareceiver.YamahaReceiverBindingConstants;
+import org.openhab.binding.yamahareceiver.internal.YamahaReceiverBindingConstants;
 import org.openhab.binding.yamahareceiver.internal.protocol.AbstractConnection;
 import org.openhab.binding.yamahareceiver.internal.protocol.InputWithNavigationControl;
 import org.openhab.binding.yamahareceiver.internal.protocol.ReceivedMessageParseException;
+import org.openhab.binding.yamahareceiver.internal.state.DeviceInformationState;
 import org.openhab.binding.yamahareceiver.internal.state.NavigationControlState;
 import org.openhab.binding.yamahareceiver.internal.state.NavigationControlStateListener;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
@@ -54,12 +60,15 @@ public class InputWithNavigationControlXML extends AbstractInputControlXML imple
      * @param state We need the current navigation state, because most navigation commands are relative commands and we
      *            offer API with absolute values.
      * @param inputID The input ID like USB or NET_RADIO.
-     * @param com The Yamaha communication object to send http requests.
+     * @param con The Yamaha communication object to send http requests.
      */
-    public InputWithNavigationControlXML(NavigationControlState state, String inputID, AbstractConnection com,
-            NavigationControlStateListener observer) {
+    public InputWithNavigationControlXML(NavigationControlState state,
+                                         String inputID,
+                                         AbstractConnection con,
+                                         NavigationControlStateListener observer,
+                                         DeviceInformationState deviceInformationState) {
 
-        super(inputID, com);
+        super(LoggerFactory.getLogger(InputWithNavigationControlXML.class), inputID, con, deviceInformationState);
 
         this.state = state;
         this.observer = observer;

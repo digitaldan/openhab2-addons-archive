@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.homematic.internal.model;
 
@@ -25,6 +29,7 @@ public class HmGatewayInfo {
     private String type;
     private String firmware;
     private String address;
+    private boolean rfInterface;
     private boolean wiredInterface;
     private boolean cuxdInterface;
     private boolean hmipInterface;
@@ -163,10 +168,25 @@ public class HmGatewayInfo {
         this.groupInterface = groupInterface;
     }
 
+    /**
+     * Returns true, if the gateway supports the RF interface.
+     */
+    public boolean isRfInterface() {
+        return rfInterface;
+    }
+
+    /**
+     * Sets the RF support of the gateway.
+     */
+    public void setRfInterface(boolean rfInterface) {
+        this.rfInterface = rfInterface;
+    }
+
     @Override
     public String toString() {
         return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append("id", id).append("type", type)
-                .append("firmware", firmware).append("address", address).append("wired", wiredInterface)
-                .append("hmip", hmipInterface).append("cuxd", cuxdInterface).append("group", groupInterface).toString();
+                .append("firmware", firmware).append("address", address).append("rf", rfInterface)
+                .append("wired", wiredInterface).append("hmip", hmipInterface).append("cuxd", cuxdInterface)
+                .append("group", groupInterface).toString();
     }
 }

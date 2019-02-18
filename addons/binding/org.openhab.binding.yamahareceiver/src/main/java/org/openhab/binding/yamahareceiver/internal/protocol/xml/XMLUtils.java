@@ -1,20 +1,25 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.yamahareceiver.internal.protocol.xml;
 
-import org.openhab.binding.yamahareceiver.YamahaReceiverBindingConstants.Zone;
+import org.openhab.binding.yamahareceiver.internal.YamahaReceiverBindingConstants.Zone;
 import org.openhab.binding.yamahareceiver.internal.protocol.ReceivedMessageParseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
@@ -23,7 +28,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.util.function.Function;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -31,7 +36,6 @@ import java.util.stream.Stream;
  *
  * @author David Graeff - Initial contribution
  * @author Tomasz Maruszak - DAB support, Spotify support, refactoring, input name conversion fix, Input mapping fix
- *
  */
 public class XMLUtils {
 
@@ -56,26 +60,18 @@ public class XMLUtils {
         return getNode(root, nodePathArr, 0);
     }
 
-    static Stream<Element> getChildElementsWhere(Node node, Function<Element, Boolean> filter) {
-        Stream.Builder<Element> stream = Stream.builder();
-
-        if (node != null) {
-            for (int i = 0; i < node.getChildNodes().getLength(); i++) {
-                Node childNode = node.getChildNodes().item(i);
-
-                if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                    Element childElement = (Element) childNode;
-
-                    if (filter.apply(childElement)) {
-                        stream.accept(childElement);
-                    }
-                }
-            }
+    static Stream<Element> getChildElements(Node node) {
+        if (node == null) {
+            return Stream.empty();
         }
-
-        return stream.build();
+        return toStream(node.getChildNodes())
+                .filter(x -> x.getNodeType() == Node.ELEMENT_NODE)
+                .map(x -> (Element) x);
     }
 
+    static Stream<Node> toStream(NodeList nodeList) {
+        return IntStream.range(0, nodeList.getLength()).mapToObj(nodeList::item);
+    }
 
     /**
      * Retrieves the child node according to the xpath expression.
@@ -96,6 +92,7 @@ public class XMLUtils {
     /**
      * Finds the node starting with the root and following the path. If the node is found it's inner text is returned,
      * otherwise the default provided value.
+     *
      * @param root
      * @param nodePath
      * @param defaultValue
@@ -110,8 +107,42 @@ public class XMLUtils {
     }
 
     /**
+     * Finds the node starting with the root and following the path.
+     * If the node is found it's inner text is returned, otherwise the default provided value.
+     * The first path that exists is returned.
+     *
+     * @param root
+     * @param nodePaths
+     * @param defaultValue
+     * @return
+     */
+    public static String getAnyNodeContentOrDefault(Node root, String defaultValue, String... nodePaths) {
+        for (String nodePath : nodePaths) {
+            String value = getNodeContentOrDefault(root, nodePath, (String) null);
+            if (value != null) {
+                return value;
+            }
+        }
+        return defaultValue;
+    }
+
+
+    /**
      * Finds the node starting with the root and following the path. If the node is found it's inner text is returned,
      * otherwise the default provided value.
+     *
+     * @param root
+     * @param nodePath
+     * @return
+     */
+    public static String getNodeContentOrEmpty(Node root, String nodePath) {
+        return getNodeContentOrDefault(root, nodePath, "");
+    }
+
+    /**
+     * Finds the node starting with the root and following the path. If the node is found it's inner text is returned,
+     * otherwise the default provided value.
+     *
      * @param root
      * @param nodePath
      * @return

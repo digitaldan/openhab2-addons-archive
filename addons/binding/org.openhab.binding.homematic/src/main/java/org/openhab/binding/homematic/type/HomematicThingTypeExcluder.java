@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.homematic.type;
 
@@ -38,7 +42,7 @@ public interface HomematicThingTypeExcluder {
      * there must be a matching
      * {@link org.eclipse.smarthome.core.thing.Channel}) which can be handled by
      * the binding (see
-     * {@link org.openhab.binding.homematic.handler.HomematicThingHandler})</li>
+     * {@link org.openhab.binding.homematic.internal.handler.HomematicThingHandler})</li>
      * 
      * @return {@link ThingTypeUID}s of ThingTypes that are supposed to be
      *         excluded from the binding's thing-type generation

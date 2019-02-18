@@ -1,15 +1,20 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.homematic.internal.communicator;
 
 import java.io.IOException;
 
+import org.openhab.binding.homematic.internal.HomematicBindingConstants;
 import org.openhab.binding.homematic.internal.misc.HomematicClientException;
 import org.openhab.binding.homematic.internal.model.HmChannel;
 import org.openhab.binding.homematic.internal.model.HmDatapoint;
@@ -60,6 +65,13 @@ public interface HomematicGateway {
     public void loadChannelValues(HmChannel channel) throws IOException;
 
     /**
+     * Loads the value of the given {@link HmDatapoint} from the device.
+     * 
+     * @param dp The HmDatapoint that shall be loaded
+     */
+    public void loadDatapointValue(HmDatapoint dp) throws IOException;
+
+    /**
      * Reenumerates the set of VALUES datapoints for the given channel.
      */
     public void updateChannelValueDatapoints(HmChannel channel) throws IOException;
@@ -71,8 +83,16 @@ public interface HomematicGateway {
 
     /**
      * Sends the datapoint to the Homematic gateway or executes virtual datapoints.
+     * 
+     * @param dp The datapoint to send/execute
+     * @param dpConfig The configuration of the datapoint
+     * @param newValue The new value for the datapoint
+     * @param rxMode The rxMode with which the value should be sent to the device
+     *            ({@link HomematicBindingConstants#RX_BURST_MODE "BURST"} for burst mode,
+     *            {@link HomematicBindingConstants#RX_WAKEUP_MODE "WAKEUP"} for wakeup mode, or null for the default
+     *            mode)
      */
-    public void sendDatapoint(HmDatapoint dp, HmDatapointConfig dpConfig, Object newValue)
+    public void sendDatapoint(HmDatapoint dp, HmDatapointConfig dpConfig, Object newValue, String rxMode)
             throws IOException, HomematicClientException;
 
     /**

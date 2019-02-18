@@ -1,10 +1,14 @@
 /**
- * Copyright (c) 2010-2018 by the respective copyright holders.
+ * Copyright (c) 2010-2019 Contributors to the openHAB project
  *
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * See the NOTICE file(s) distributed with this work for additional
+ * information.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License 2.0 which is available at
+ * http://www.eclipse.org/legal/epl-2.0
+ *
+ * SPDX-License-Identifier: EPL-2.0
  */
 package org.openhab.binding.homematic.internal.converter.type;
 
@@ -77,10 +81,11 @@ public abstract class AbstractTypeConverter<T extends State> implements TypeConv
     @SuppressWarnings("unchecked")
     @Override
     public Object convertToBinding(Type type, HmDatapoint dp) throws ConverterException {
-        if (logger.isTraceEnabled()) {
-            logger.trace("Converting type {} with value '{}' to {} value with {} for '{}'",
-                    type.getClass().getSimpleName(), type.toString(), dp.getType(), this.getClass().getSimpleName(),
-                    new HmDatapointInfo(dp));
+        if (isLoggingRequired()) {
+            logAtDefaultLevel(
+                    "Converting type {} with value '{}' using {} to datapoint '{}' (dpType='{}', dpUnit='{}')",
+                    type.getClass().getSimpleName(), type.toString(), this.getClass().getSimpleName(),
+                    new HmDatapointInfo(dp), dp.getType(), dp.getUnit());
         }
 
         if (type == UnDefType.NULL) {
@@ -101,9 +106,10 @@ public abstract class AbstractTypeConverter<T extends State> implements TypeConv
     @SuppressWarnings("unchecked")
     @Override
     public T convertFromBinding(HmDatapoint dp) throws ConverterException {
-        if (logger.isTraceEnabled()) {
-            logger.trace("Converting {} value '{}' with {} for '{}'", dp.getType(), dp.getValue(),
-                    this.getClass().getSimpleName(), new HmDatapointInfo(dp));
+        if (isLoggingRequired()) {
+            logAtDefaultLevel("Converting datapoint '{}' (dpType='{}', dpUnit='{}', dpValue='{}') with {}",
+                    new HmDatapointInfo(dp), dp.getType(), dp.getUnit(), dp.getValue(),
+                    this.getClass().getSimpleName());
         }
 
         if (dp.getValue() == null) {
@@ -115,6 +121,41 @@ public abstract class AbstractTypeConverter<T extends State> implements TypeConv
         }
 
         return fromBinding(dp);
+    }
+
+    /**
+     * By default, instances of {@link AbstractTypeConverter} log in level TRACE.
+     * May be overridden to increase logging verbosity of a converter.
+     *
+     * @return desired LogLevel
+     */
+    protected LogLevel getDefaultLogLevelForTypeConverter() {
+        return LogLevel.TRACE;
+    }
+
+    private boolean isLoggingRequired() {
+        if (getDefaultLogLevelForTypeConverter() == LogLevel.TRACE) {
+            return logger.isTraceEnabled();
+        }
+        if (getDefaultLogLevelForTypeConverter() == LogLevel.DEBUG) {
+            return logger.isDebugEnabled();
+        }
+        return true;
+    }
+
+    private void logAtDefaultLevel(String format, Object... arguments) {
+        switch (getDefaultLogLevelForTypeConverter()) {
+            case TRACE:
+                logger.trace(format, arguments);
+                break;
+            case DEBUG:
+                logger.debug(format, arguments);
+                break;
+            case INFO:
+            default:
+                logger.info(format, arguments);
+                break;
+        }
     }
 
     /**
@@ -144,5 +185,11 @@ public abstract class AbstractTypeConverter<T extends State> implements TypeConv
      * Converts the datapoint value to a openHAB type.
      */
     protected abstract T fromBinding(HmDatapoint dp) throws ConverterException;
+
+    protected enum LogLevel {
+        TRACE,
+        INFO,
+        DEBUG
+    }
 
 }
