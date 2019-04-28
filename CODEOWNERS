@@ -68,6 +68,7 @@
 /addons/binding/org.openhab.binding.ntp.test/ @marcelrv
 /addons/binding/org.openhab.binding.nuki/ @mkatter
 /addons/binding/org.openhab.binding.oceanic/ @kgoderis
+/addons/binding/org.openhab.binding.omnilink/ @boc-tothefuture @craigham @digitaldan
 /addons/binding/org.openhab.binding.onebusaway/ @sdwilsh
 /addons/binding/org.openhab.binding.onewiregpio/ @aogorek
 /addons/binding/org.openhab.binding.onkyo/ @pail23 @paulianttila
