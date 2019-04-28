@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public enum SystemType {
-    OMNI(16, 30),
+    OMNI(16, 30, 38),
     LUMINA(36, 37);
 
     private final Set<Integer> modelNumbers;
