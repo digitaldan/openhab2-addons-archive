@@ -219,7 +219,6 @@ public class OmnilinkBridgeHandler extends BaseBridgeHandler implements Notifica
                     .filter(Optional::isPresent).findFirst().orElse(Optional.empty());
 
             temperatureFormat = TemperatureFormat.valueOf(reqSystemFormats().getTempFormat());
-            logger.debug("System type {}", reqSystemInformation().getModel());
             systemType = SystemType.getType(reqSystemInformation().getModel());
 
             if (config.getLogPollingSeconds() > 0) {
