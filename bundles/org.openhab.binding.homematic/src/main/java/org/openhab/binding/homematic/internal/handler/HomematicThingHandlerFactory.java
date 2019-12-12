@@ -34,6 +34,7 @@ import org.osgi.service.component.annotations.Reference;
  */
 @Component(service = ThingHandlerFactory.class, configurationPid = "binding.homematic")
 public class HomematicThingHandlerFactory extends BaseThingHandlerFactory {
+
     private HomematicTypeGenerator typeGenerator;
     private NetworkAddressService networkAddressService;
     private HttpClient httpClient;
@@ -79,5 +80,4 @@ public class HomematicThingHandlerFactory extends BaseThingHandlerFactory {
             return new HomematicThingHandler(thing);
         }
     }
-
 }
