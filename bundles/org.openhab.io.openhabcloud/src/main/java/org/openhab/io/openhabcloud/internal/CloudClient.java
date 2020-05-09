@@ -130,6 +130,7 @@ public class CloudClient {
     private CloudClientListener listener;
     private boolean remoteAccessEnabled;
     private Set<String> exposedItems;
+    private List<String> cookie;
 
     /**
      * Constructor of CloudClient
@@ -181,8 +182,22 @@ public class CloudClient {
                         headers.put("openhabversion", Arrays.asList(OpenHAB.getVersion()));
                         headers.put("clientversion", Arrays.asList(CloudService.clientVersion));
                         headers.put("remoteaccess", Arrays.asList(((Boolean) remoteAccessEnabled).toString()));
+                        if (cookie != null) {
+                            headers.put("Cookie", cookie);
+                        }
                     }
                 });
+
+                transport.on(Transport.EVENT_RESPONSE_HEADERS, new Emitter.Listener() {
+                    @Override
+                    public void call(Object... args) {
+                        logger.trace("Transport.EVENT_REQUEST_HEADERS");
+                        @SuppressWarnings("unchecked")
+                        Map<String, List<String>> headers = (Map<String, List<String>>) args[0];
+                        cookie = headers.get("set-cookie");
+                    }
+                });
+
             }
         });
         socket.on(Socket.EVENT_CONNECT, new Emitter.Listener() {
