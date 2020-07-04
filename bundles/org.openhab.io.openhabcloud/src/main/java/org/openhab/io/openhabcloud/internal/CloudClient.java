@@ -44,7 +44,9 @@ import org.eclipse.jetty.util.URIUtil;
 import org.eclipse.smarthome.core.common.ThreadPoolManager;
 import org.json.JSONException;
 import org.json.JSONObject;
+//import org.json.JSONObject;
 import org.openhab.core.OpenHAB;
+import org.openhab.io.openhabcloud.internal.json.IFTTTItemState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -483,6 +485,28 @@ public class CloudClient {
                 itemUpdateMessage.put("itemName", itemName);
                 itemUpdateMessage.put("itemStatus", itemState);
                 socket.emit("itemupdate", itemUpdateMessage);
+            } catch (JSONException e) {
+                logger.debug("{}", e.getMessage());
+            }
+        } else {
+            logger.debug("No connection, Item update is not sent");
+        }
+    }
+
+    /**
+     * Send item update to openHAB Cloud
+     *
+     * @param itemName the name of the item
+     * @param itemState updated item state
+     *
+     */
+    public void sendIFTTTState(IFTTTItemState state) {
+        if (isConnected()) {
+            logger.debug("Sending IFTTT update for item '{}'", state.item);
+            JSONObject itemUpdateMessage = new JSONObject(state);
+            logger.trace("IFTTT JSON {}", itemUpdateMessage.toString(4));
+            try {
+                socket.emit("iftttItemUpdate", itemUpdateMessage);
             } catch (JSONException e) {
                 logger.debug("{}", e.getMessage());
             }

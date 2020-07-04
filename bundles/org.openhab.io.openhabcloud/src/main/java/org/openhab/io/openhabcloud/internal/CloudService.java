@@ -21,10 +21,13 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.RandomStringUtils;
@@ -53,6 +56,7 @@ import org.eclipse.smarthome.io.net.http.HttpClientFactory;
 import org.eclipse.smarthome.model.script.engine.action.ActionService;
 import org.openhab.core.OpenHAB;
 import org.openhab.io.openhabcloud.NotificationAction;
+import org.openhab.io.openhabcloud.internal.json.IFTTTItemState;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
 import org.osgi.service.component.annotations.Activate;
@@ -86,6 +90,8 @@ public class CloudService implements ActionService, CloudClientListener, EventSu
     private static final String DEFAULT_URL = "https://myopenhab.org/";
     private static final int DEFAULT_LOCAL_OPENHAB_MAX_CONCURRENT_REQUESTS = 200;
     private static final int DEFAULT_LOCAL_OPENHAB_REQUEST_TIMEOUT = 30000;
+    private static final int PERSISTENT_STATE_HISTORY_LIMIT = 10;
+    private static final int PERSISTENT_STATE_MAX_LENGTH = 256;
     private static final String HTTPCLIENT_NAME = "openhabcloud";
 
     private Logger logger = LoggerFactory.getLogger(CloudService.class);
@@ -99,6 +105,8 @@ public class CloudService implements ActionService, CloudClientListener, EventSu
 
     private boolean remoteAccessEnabled = true;
     private Set<String> exposedItems = null;
+    private Map<String, CircularList<IFTTTItemState>> itemStates = new HashMap<String, CircularList<IFTTTItemState>>();
+    // private CappedLinkedHashMap<String, ItemState> itemStates = new CappedLinkedHashMap<String, ItemState>(50);
     private int localPort;
 
     public CloudService() {
@@ -217,6 +225,17 @@ public class CloudService implements ActionService, CloudClientListener, EventSu
                 exposedItems.add(entry.toString());
             }
         }
+        // add exposed entries to persistence
+        exposedItems.forEach(item -> {
+            if (!itemStates.containsKey(item)) {
+                itemStates.put(item, new CircularList<IFTTTItemState>(PERSISTENT_STATE_HISTORY_LIMIT));
+            }
+        });
+        // remove existing entries no longer exposed
+        itemStates = itemStates.entrySet().stream().filter(e -> exposedItems.contains(e.getKey()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+
+        // persist map
 
         logger.debug("UUID = {}, secret = {}", InstanceUUID.get(), getSecret());
 
@@ -390,8 +409,40 @@ public class CloudService implements ActionService, CloudClientListener, EventSu
     @Override
     public void receive(Event event) {
         ItemStateEvent ise = (ItemStateEvent) event;
-        if (exposedItems != null && exposedItems.contains(ise.getItemName())) {
-            cloudClient.sendItemUpdate(ise.getItemName(), ise.getItemState().toString());
+        // if (exposedItems != null && exposedItems.contains(ise.getItemName())) {
+        // cloudClient.sendItemUpdate(ise.getItemName(), ise.getItemState().toString());
+        // }
+        CircularList<IFTTTItemState> states = itemStates.get(ise.getItemName());
+        if (states != null) {
+            String newState = ise.getItemState().toString();
+            if (newState.length() > PERSISTENT_STATE_MAX_LENGTH) {
+                newState = newState.substring(0, PERSISTENT_STATE_MAX_LENGTH);
+            }
+            if (states.isEmpty() || !newState.equals(states.getLast().status)) {
+                IFTTTItemState state = new IFTTTItemState(ise.getItemName(), newState);
+                // do client call
+                cloudClient.sendIFTTTState(state);
+                states.add(state);
+                // persist to disk
+            }
+        }
+
+    }
+
+    class CircularList<E> extends LinkedList<E> {
+        private int capacity = 10;
+
+        public CircularList(int capacity) {
+            this.capacity = capacity;
+        }
+
+        @Override
+        public boolean add(E e) {
+            if (size() >= capacity) {
+                removeFirst();
+            }
+            return super.add(e);
         }
     }
+
 }
